@@ -167,7 +167,8 @@ def main(original_pdb_path, generated_pdbs_dir, output_base_dir="grouped_pdbs"):
                 if unaligned_ggg_regions:
                     print(f"    Unaligned 'GGG...GGG' regions found in {representative_pdb_name}:")
                     for region in unaligned_ggg_regions:
-                        print(f"      Chain: {region['chain_id']}, Positions: {region['start_res']}-{region['end_res']}, Sequence: {region['sequence']}")
+                        position_list = ' '.join(map(str, range(region['start_res'], region['end_res'] + 1)))
+                        print(f"      '{region['chain_id']}' '{position_list}'")
                 else:
                     print(f"    No unaligned 'GGG...GGG' regions found in {representative_pdb_name}.")
             else:
