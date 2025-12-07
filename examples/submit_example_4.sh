@@ -1,9 +1,15 @@
 #!/bin/bash
-#SBATCH -p gpu
-#SBATCH --mem=32g
-#SBATCH --gres=gpu:rtx2080:1
-#SBATCH -c 3
-#SBATCH --output=example_4.out
+#SBATCH -J ProteinMPNN_non_fixed
+#SBATCH -p gpu_l40
+#SBATCH -N 1
+#SBATCH -o ProteinMPNN_non_fixed_%j.out
+#SBATCH -e ProteinMPNN_non_fixed_%j.err
+#SBATCH --no-requeue
+#SBATCH -A yulongli_g1
+#SBATCH --qos=yulonglil40
+#SBATCH --gres=gpu:1
+#SBATCH --overcommit
+#SBATCH --mincpus=8
 
 source activate mlfold
 

@@ -1131,9 +1131,12 @@ class ProteinMPNN(nn.Module):
         h_S = torch.zeros_like(h_V, device=device)
         S = torch.zeros((N_batch, N_nodes), dtype=torch.int64, device=device)
         h_V_stack = [h_V] + [torch.zeros_like(h_V, device=device) for _ in range(len(self.decoder_layers))]
-        constant = torch.tensor(omit_AAs_np, device=device)
-        constant_bias = torch.tensor(bias_AAs_np, device=device)
-        #chain_mask_combined = chain_mask*chain_M_pos 
+        if device.type == "mps":
+            constant = torch.tensor(omit_AAs_np, device=device, dtype=torch.float32)
+            constant_bias = torch.tensor(bias_AAs_np, device=device, dtype=torch.float32)
+        else:
+            constant = torch.tensor(omit_AAs_np, device=device)
+            constant_bias = torch.tensor(bias_AAs_np, device=device)
         omit_AA_mask_flag = omit_AA_mask != None
 
 
