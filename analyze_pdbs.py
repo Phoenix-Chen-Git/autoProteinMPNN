@@ -1,5 +1,6 @@
 import os
 import shutil
+import argparse
 from Bio.PDB import PDBParser, MMCIFParser, Polypeptide
 from Bio import Align
 from Bio.Align import substitution_matrices
@@ -176,8 +177,14 @@ def main(original_pdb_path, generated_pdbs_dir, output_base_dir="grouped_pdbs"):
     print("Analysis complete.")
 
 if __name__ == "__main__":
-    # Example Usage: Replace with actual paths
-    original_pdb = "test/origin_pdb/design4.pdb" # Replace with your original PDB path
-    generated_pdbs_folder = "test/pdbs/" # Replace with your generated PDBs directory
+    parser = argparse.ArgumentParser(description="Analyze generated PDBs for unaligned GGG stretches.")
+    parser.add_argument("--original_pdb", type=str, required=True,
+                        help="Path to the original PDB file.")
+    parser.add_argument("--generated_pdbs_folder", type=str, required=True,
+                        help="Path to the directory containing generated PDB files.")
+    parser.add_argument("--output_base_dir", type=str, default="grouped_pdbs",
+                        help="Base directory to store organized PDBs and analysis results. Defaults to 'grouped_pdbs'.")
+
+    args = parser.parse_args()
     
-    main(original_pdb, generated_pdbs_folder)
+    main(args.original_pdb, args.generated_pdbs_folder, args.output_base_dir)
