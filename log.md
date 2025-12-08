@@ -12,6 +12,7 @@ design for all of them.
 
 
 separate the fa into fas.
+([split_mpnn_seqs.py](split_mpnn_seqs.py) this can separate fa into fastas)
 
 
 trimm using start and end.
@@ -31,3 +32,8 @@ sbatch MPNN4_customize.sh [--pdb_dir DIR] [--output_dir DIR] [--chains "A B"] [-
 usage:
 python auto_run_mpnn.py --original_pbd test/origin_pdb/design4.pdb --generated_pdbs_folder test/pdbs/ --output_dir test_output
 this script's function can cover the use of analyze_pdbs.py
+
+
+## split_mpnn_seqs.py
+usage:
+python split_mpnn_seqs.py <dir>
