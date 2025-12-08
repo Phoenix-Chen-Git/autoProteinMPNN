@@ -11,11 +11,9 @@
 #SBATCH --overcommit
 #SBATCH --mincpus=8
 
-source activate mlfold
-
 usage() {
     cat <<'EOF'
-Usage: sbatch submit_example_4_non_fixed.sh [--pdb_dir DIR] [--output_dir DIR] [--chains "A B"] [--design_positions "..."]
+Usage: sbatch MPNN4_customize.sh [--pdb_dir DIR] [--output_dir DIR] [--chains "A B"] [--design_positions "..."]
 
 Options:
   --pdb_dir DIR      Directory containing input PDB complexes (default ../inputs/PDB_complexes/pdbs/)
@@ -82,7 +80,7 @@ python ../protein_mpnn_run.py \
     --chain_id_jsonl "$path_for_assigned_chains" \
     --fixed_positions_jsonl "$path_for_fixed_positions" \
     --out_folder "$output_dir" \
-        --num_seq_per_target 2 \
+        --num_seq_per_target 10 \
         --sampling_temp "0.1" \
         --seed 37 \
         --batch_size 10
