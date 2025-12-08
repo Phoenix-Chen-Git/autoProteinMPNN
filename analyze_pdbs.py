@@ -1,6 +1,8 @@
 import os
 import shutil
 import argparse
+import warnings
+warnings.filterwarnings("ignore")
 from Bio.PDB import PDBParser, MMCIFParser, Polypeptide
 from Bio import Align
 from Bio.Align import substitution_matrices
