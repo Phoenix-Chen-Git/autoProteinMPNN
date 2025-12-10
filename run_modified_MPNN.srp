@@ -1,0 +1,29 @@
+#!/bin/bash
+#SBATCH -J modified_MPNN
+#SBATCH -p gpu_l40
+#SBATCH -N 1
+#SBATCH -o MPNN%j.out
+#SBATCH -e MPNN%j.err
+#SBATCH --no-requeue
+#SBATCH -A yulongli_g1
+#SBATCH --qos=yulonglil40
+#SBATCH --gres=gpu:1
+#SBATCH --overcommit
+#SBATCH --mincpus=8
+
+CONDA_BASE=$(conda info --base) # 尝试自动获取 Conda 基础路径
+source $CONDA_BASE/etc/profile.d/conda.sh
+conda activate mlfold
+
+
+original_pdb=$1
+generated_pdbs_dir=$2
+output_dir=$3
+grouped_pdbs_dir=$output_dir'_grouped_pdbs'
+mkdir -p "$output_dir"
+mkdir -p "$grouped_pdbs_dir"
+
+python auto_run_mpnn.py --original_pdb $original_pdb --generated_pdbs_folder $generated_pdbs_dir --output_dir $output_dir --grouped_pdbs_dir $grouped_pdbs_dir
+
+
+python split_mpnn_seqs.py $3
