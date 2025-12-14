@@ -15,15 +15,34 @@ CONDA_BASE=$(conda info --base) # 尝试自动获取 Conda 基础路径
 source $CONDA_BASE/etc/profile.d/conda.sh
 conda activate mlfold
 
+# Check arguments
+if [ "$#" -lt 2 ]; then
+    echo "Usage: sbatch run_autoProteinMPNN.srp <generated_pdbs_dir> <output_dir> [original_pdb_or_fixed_seq1] [fixed_seq2] ..."
+    exit 1
+fi
 
-original_pdb=$1
-generated_pdbs_dir=$2
-output_dir=$3
+generated_pdbs_dir=$1
+output_dir=$2
 grouped_pdbs_dir=$output_dir'_grouped_pdbs'
-mkdir -p "$output_dir"
-mkdir -p "$grouped_pdbs_dir"
+shift 2
 
-python auto_run_mpnn.py --original_pdb $original_pdb --generated_pdbs_folder $generated_pdbs_dir --output_dir $output_dir --grouped_pdbs_dir $grouped_pdbs_dir
+# Check if the third argument is a file (likely a PDB) or a string (likely a sequence)
+if [ -f "$1" ]; then
+    # Mode 1: Original PDB provided
+    original_pdb=$1
+    echo "Running in Original PDB Mode with: $original_pdb"
+    python auto_run_mpnn.py --original_pdb "$original_pdb" --generated_pdbs_folder "$generated_pdbs_dir" --output_dir "$output_dir" --grouped_pdbs_dir "$grouped_pdbs_dir"
+else
+    # Mode 2: Fixed sequences provided (or no optional args)
+    if [ "$#" -gt 0 ]; then
+        fixed_sequences="$@"
+        echo "Running in Fixed Sequences Mode with: $fixed_sequences"
+        python auto_run_mpnn.py --generated_pdbs_folder "$generated_pdbs_dir" --output_dir "$output_dir" --grouped_pdbs_dir "$grouped_pdbs_dir" --fixed_sequences $fixed_sequences
+    else
+        echo "Error: Either an original PDB file or fixed sequences must be provided."
+        exit 1
+    fi
+fi
 
-
-python split_mpnn_seqs.py $3
+# Run split script (assuming the output dir is passed as the first arg here as in the original script)
+python split_mpnn_seqs.py "$output_dir"

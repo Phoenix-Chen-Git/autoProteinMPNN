@@ -107,20 +107,59 @@ def find_unaligned_ggg_indices(original_sequences, generated_sequences):
 
     return results
 
+def get_design_positions_excluding_fixed(generated_sequences, fixed_sequences_list):
+    """
+    Finds the occurrences of fixed sequences in the generated sequences.
+    Returns the INDICES of the residues that are NOT part of the fixed sequences (i.e., are designable).
+    """
+    results = [] # List of tuples (chain_id, [list of 1-based indices])
+
+    for chain_id, gen_seq in generated_sequences.items():
+        fixed_indices = set()
+        
+        for fixed_seq in fixed_sequences_list:
+            start = 0
+            while True:
+                idx = gen_seq.find(fixed_seq, start)
+                if idx == -1:
+                    break
+                # Mark these indices as fixed (1-based for MPNN input, but we use 0-based for logic first)
+                for k in range(idx, idx + len(fixed_seq)):
+                    fixed_indices.add(k)
+                start = idx + 1 # Continue searching for other occurrences
+        
+        # Calculate designable indices (complement of fixed)
+        designable_indices = []
+        for i in range(len(gen_seq)):
+            if i not in fixed_indices:
+                designable_indices.append(i + 1) # Convert to 1-based index
+        
+        if designable_indices:
+            results.append((chain_id, designable_indices))
+            
+    return results
+
 def main():
-    parser = argparse.ArgumentParser(description="Auto run MPNN design on generated PDBs with unaligned GGG regions.")
-    parser.add_argument("--original_pdb", type=str, required=True, help="Path to the original PDB file.")
+    parser = argparse.ArgumentParser(description="Auto run MPNN design on generated PDBs.")
+    parser.add_argument("--original_pdb", type=str, help="Path to the original PDB file. Required if --fixed_sequences is not used.")
     parser.add_argument("--generated_pdbs_folder", type=str, required=True, help="Path to the directory containing generated PDB files.")
     parser.add_argument("--output_dir", type=str, default="outputs", help="Directory where MPNN outputs will be stored.")
     parser.add_argument("--grouped_pdbs_dir", type=str, default="grouped_pdbs", help="Directory to store grouped PDBs.")
+    parser.add_argument("--fixed_sequences", type=str, nargs='+', help="List of sequences to KEEP FIXED. Everything else will be designed.")
 
     args = parser.parse_args()
+
+    if not args.fixed_sequences and not args.original_pdb:
+        parser.error("argument --original_pdb is required when --fixed_sequences is not used.")
 
     # 1. Group PDBs
     group_pdbs(args.generated_pdbs_folder, args.grouped_pdbs_dir)
 
     # 2. Analyze and Run MPNN
-    original_sequences = get_sequence_from_pdb(args.original_pdb)
+    if not args.fixed_sequences:
+        original_sequences = get_sequence_from_pdb(args.original_pdb)
+    else:
+        original_sequences = None # Not needed in fixed_sequences mode
 
     groups = [d for d in os.listdir(args.grouped_pdbs_dir) if os.path.isdir(os.path.join(args.grouped_pdbs_dir, d)) and d.startswith("length_")]
     groups.sort() 
@@ -138,10 +177,15 @@ def main():
         
         gen_sequences = get_sequence_from_pdb(rep_pdb_path)
         
-        targets = find_unaligned_ggg_indices(original_sequences, gen_sequences)
+        if args.fixed_sequences:
+            print(f"  Using fixed sequences mode. Preserving: {args.fixed_sequences}")
+            targets = get_design_positions_excluding_fixed(gen_sequences, args.fixed_sequences)
+        else:
+            print(f"  Using auto-alignment mode to fix unaligned GGG regions.")
+            targets = find_unaligned_ggg_indices(original_sequences, gen_sequences)
         
         if not targets:
-            print(f"  No unaligned GGG regions found for {group_name}. Skipping.")
+            print(f"  No designable regions found for {group_name} (or all fixed). Skipping.")
             continue
             
         chains_arg = []
