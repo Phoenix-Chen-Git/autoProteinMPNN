@@ -109,3 +109,20 @@ NMYKYKKIGNKYIVSINNHTEIVKAIKEFCKEKNIKSGTINGIGQVGKVTLRFYNPETKEYTEKTFNDNFEISNLTGFIS
 }
 ```
 -----------------------------------------------------------------------------------------------------
+
+Auto Run MPNN (Refinement Workflow):
+To automatically group generated PDBs by length, identify unaligned GGG regions (potential loop issues), and run ProteinMPNN to redesign only those specific positions:
+
+Method 1: Direct Python Call
+```bash
+python auto_run_mpnn.py --original_pdb design4/original/design4.pdb --generated_pdbs_folder design4/pdbs_test --output_dir test_output --grouped_pdbs_dir test_output_grouped
+```
+
+Method 2: Using SLURM Wrapper (also runs `split_mpnn_seqs.py`)
+```bash
+sbatch run_autoProteinMPNN.srp <original_pdb_path> <generated_pdbs_folder> <output_dir>
+```
+Example:
+```bash
+sbatch run_autoProteinMPNN.srp design4/original/design4.pdb design4/pdbs_test test_output
+```
