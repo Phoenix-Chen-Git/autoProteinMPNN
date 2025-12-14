@@ -8,7 +8,13 @@ Auto Run MPNN Usage:
 
 Method 1: Direct Python Call (Auto-detect unaligned GGGs)
 ```bash
-python auto_run_mpnn.py --original_pdb design4/original/design4.pdb --generated_pdbs_folder design4/pdbs_test --output_dir test_output --grouped_pdbs_dir test_output_grouped
+python auto_run_mpnn.py \
+    --original_pdb design4/original/design4.pdb \
+    --generated_pdbs_folder design4/pdbs_test \
+    --output_dir test_output \
+    --grouped_pdbs_dir test_output_grouped \
+    --sampling_temp 0.1 \
+    --num_seq_per_target 10
 ```
 
 Method 2: Direct Python Call (Specify fixed sequences)
@@ -21,13 +27,13 @@ Provide a space-separated list of amino acid sequences you wish to keep fixed. T
 
 SLURM Wrapper Usage:
 ```bash
-sbatch run_autoProteinMPNN.srp <generated_pdbs_folder> <output_dir> [original_pdb_path_or_fixed_seq1] [fixed_seq2] ...
+sbatch run_autoProteinMPNN.srp [-t SAMPLING_TEMP] [-n NUM_SEQ_PER_TARGET] <generated_pdbs_folder> <output_dir> [original_pdb_path_or_fixed_seq1] [fixed_seq2] ...
 ```
 
 Examples:
 1. With Original PDB (Auto-detect):
    ```bash
-   sbatch run_autoProteinMPNN.srp design4/pdbs_test test_output design4/original/design4.pdb
+    sbatch run_autoProteinMPNN.srp -t 0.1 -n 10 design4/pdbs_test test_output design4/original/design4.pdb
    ```
    (Note: The script detects that the 3rd argument is a file)
 

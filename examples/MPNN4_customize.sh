@@ -20,6 +20,8 @@ Options:
   --output_dir DIR   Directory where outputs will be written (default ../outputs/example_4_non_fixed_outputs)
   --chains STR       Space-separated chains to design (default "A C")
   --design_positions STR  Residue ranges for --specify_non_fixed (default "1 2 3 4 5 6 7 8 9 10, 3 4 5 6 7 8")
+    --sampling_temp STR Sampling temperature(s) for ProteinMPNN (default "0.1")
+    --num_seq_per_target INT  Number of sequences per PDB/target (default 10)
   -h, --help         Show this help message and exit
 EOF
     exit 0
@@ -30,6 +32,9 @@ output_dir="../outputs/example_4_non_fixed_outputs"
 chains_to_design="A C"
 #The first amino acid in the chain corresponds to 1 and not PDB residues index for now.
 design_only_positions="1 2 3 4 5 6 7 8 9 10, 3 4 5 6 7 8" #design only these residues; use flag --specify_non_fixed
+
+sampling_temp="0.1"
+num_seq_per_target=10
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -47,6 +52,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         --design_positions)
             design_only_positions="$2"
+            shift 2
+            ;;
+        --sampling_temp)
+            sampling_temp="$2"
+            shift 2
+            ;;
+        --num_seq_per_target)
+            num_seq_per_target="$2"
             shift 2
             ;;
         -h|--help)
@@ -69,6 +82,15 @@ path_for_parsed_chains="$output_dir/parsed_pdbs.jsonl"
 path_for_assigned_chains="$output_dir/assigned_pdbs.jsonl"
 path_for_fixed_positions="$output_dir/fixed_pdbs.jsonl"
 
+# ProteinMPNN uses NUM_BATCHES = num_seq_per_target // batch_size, so choose a batch_size
+# that yields exactly num_seq_per_target sequences.
+batch_size=10
+if [[ "$num_seq_per_target" -lt 10 ]]; then
+    batch_size="$num_seq_per_target"
+elif [[ $(( num_seq_per_target % 10 )) -ne 0 ]]; then
+    batch_size=1
+fi
+
 python ../helper_scripts/parse_multiple_chains.py --input_path="$folder_with_pdbs" --output_path="$path_for_parsed_chains"
 
 python ../helper_scripts/assign_fixed_chains.py --input_path="$path_for_parsed_chains" --output_path="$path_for_assigned_chains" --chain_list "$chains_to_design"
@@ -80,7 +102,7 @@ python ../protein_mpnn_run.py \
     --chain_id_jsonl "$path_for_assigned_chains" \
     --fixed_positions_jsonl "$path_for_fixed_positions" \
     --out_folder "$output_dir" \
-        --num_seq_per_target 10 \
-        --sampling_temp "0.1" \
+        --num_seq_per_target "$num_seq_per_target" \
+        --sampling_temp "$sampling_temp" \
         --seed 37 \
-        --batch_size 10
+        --batch_size "$batch_size"

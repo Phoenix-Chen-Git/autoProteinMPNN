@@ -37,3 +37,8 @@ this script's function can cover the use of analyze_pdbs.py
 ## split_mpnn_seqs.py
 usage:
 python split_mpnn_seqs.py <dir>
+
+# 2025.12.14
+- Added end-to-end support for controlling sampling temperature and sequences-per-PDB.
+- `run_autoProteinMPNN.srp` now supports `-t <temp>` and `-n <num>` and forwards them safely.
+- `examples/MPNN4_customize.sh` now accepts `--sampling_temp` and `--num_seq_per_target` (no longer hard-coded).

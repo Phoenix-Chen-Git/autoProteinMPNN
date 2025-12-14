@@ -146,6 +146,8 @@ def main():
     parser.add_argument("--output_dir", type=str, default="outputs", help="Directory where MPNN outputs will be stored.")
     parser.add_argument("--grouped_pdbs_dir", type=str, default="grouped_pdbs", help="Directory to store grouped PDBs.")
     parser.add_argument("--fixed_sequences", type=str, nargs='+', help="List of sequences to KEEP FIXED. Everything else will be designed.")
+    parser.add_argument("--sampling_temp", type=str, default="0.1", help="Sampling temperature for MPNN (default: 0.1).")
+    parser.add_argument("--num_seq_per_target", type=int, default=10, help="Number of sequences to generate per target (default: 10).")
 
     args = parser.parse_args()
 
@@ -211,7 +213,9 @@ def main():
             "--pdb_dir", abs_pdb_dir,
             "--output_dir", abs_output_dir,
             "--chains", chains_str,
-            "--design_positions", pos_str_full
+            "--design_positions", pos_str_full,
+            "--sampling_temp", args.sampling_temp,
+            "--num_seq_per_target", str(args.num_seq_per_target)
         ]
         
         cwd = "examples"

@@ -15,9 +15,34 @@ CONDA_BASE=$(conda info --base) # 尝试自动获取 Conda 基础路径
 source $CONDA_BASE/etc/profile.d/conda.sh
 conda activate mlfold
 
-# Check arguments
+# Default values
+SAMPLING_TEMP="0.1"
+NUM_SEQ_PER_TARGET=10
+
+# Parse optional arguments for temperature and num_seq
+while getopts ":t:n:" opt; do
+  case $opt in
+    t)
+      SAMPLING_TEMP="$OPTARG"
+      ;;
+    n)
+      NUM_SEQ_PER_TARGET="$OPTARG"
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+    :)
+      echo "Option -$OPTARG requires an argument." >&2
+      exit 1
+      ;;
+  esac
+done
+shift "$((OPTIND-1))"
+
+# Check arguments for core script
 if [ "$#" -lt 2 ]; then
-    echo "Usage: sbatch run_autoProteinMPNN.srp <generated_pdbs_dir> <output_dir> [original_pdb_or_fixed_seq1] [fixed_seq2] ..."
+    echo "Usage: sbatch run_autoProteinMPNN.srp [-t SAMPLING_TEMP] [-n NUM_SEQ_PER_TARGET] <generated_pdbs_dir> <output_dir> [original_pdb_or_fixed_seq1] [fixed_seq2] ..."
     exit 1
 fi
 
@@ -26,22 +51,33 @@ output_dir=$2
 grouped_pdbs_dir=$output_dir'_grouped_pdbs'
 shift 2
 
-# Check if the third argument is a file (likely a PDB) or a string (likely a sequence)
+# Create output directories
+mkdir -p "$output_dir"
+mkdir -p "$grouped_pdbs_dir"
+
+MPNN_COMMAND=(
+  python auto_run_mpnn.py
+  --generated_pdbs_folder "$generated_pdbs_dir"
+  --output_dir "$output_dir"
+  --grouped_pdbs_dir "$grouped_pdbs_dir"
+  --sampling_temp "$SAMPLING_TEMP"
+  --num_seq_per_target "$NUM_SEQ_PER_TARGET"
+)
+
+# Check if the next argument is a file (likely a PDB) or a string (likely a sequence)
 if [ -f "$1" ]; then
     # Mode 1: Original PDB provided
     original_pdb=$1
-    echo "Running in Original PDB Mode with: $original_pdb"
-    python auto_run_mpnn.py --original_pdb "$original_pdb" --generated_pdbs_folder "$generated_pdbs_dir" --output_dir "$output_dir" --grouped_pdbs_dir "$grouped_pdbs_dir"
+    echo "Running in Original PDB Mode with: $original_pdb (Temp: $SAMPLING_TEMP, Num_Seq: $NUM_SEQ_PER_TARGET)"
+  "${MPNN_COMMAND[@]}" --original_pdb "$original_pdb"
+elif [ "$#" -gt 0 ]; then
+    # Mode 2: Fixed sequences provided
+  fixed_sequences=("$@")
+  echo "Running in Fixed Sequences Mode with: ${fixed_sequences[*]} (Temp: $SAMPLING_TEMP, Num_Seq: $NUM_SEQ_PER_TARGET)"
+  "${MPNN_COMMAND[@]}" --fixed_sequences "${fixed_sequences[@]}"
 else
-    # Mode 2: Fixed sequences provided (or no optional args)
-    if [ "$#" -gt 0 ]; then
-        fixed_sequences="$@"
-        echo "Running in Fixed Sequences Mode with: $fixed_sequences"
-        python auto_run_mpnn.py --generated_pdbs_folder "$generated_pdbs_dir" --output_dir "$output_dir" --grouped_pdbs_dir "$grouped_pdbs_dir" --fixed_sequences $fixed_sequences
-    else
-        echo "Error: Either an original PDB file or fixed sequences must be provided."
-        exit 1
-    fi
+    echo "Error: Either an original PDB file or fixed sequences must be provided."
+    exit 1
 fi
 
 # Run split script (assuming the output dir is passed as the first arg here as in the original script)
